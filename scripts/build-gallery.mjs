@@ -1,4 +1,3 @@
-import { execFileSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -81,20 +80,15 @@ console.log(`Generated ${payload.stats.total} cases, ${payload.stats.withImage} 
 function resolveSourceDir() {
   const explicit = process.env.IMAGE_INSPIRER_DIR;
   const candidates = [
+    path.join(root, 'resources', 'image-inspirer'),
     explicit && path.resolve(explicit),
-    path.resolve(root, '..', 'image-inspirer'),
-    path.join(root, '.cache', 'image-inspirer'),
   ].filter(Boolean);
 
   for (const candidate of candidates) {
     if (existsSync(path.join(candidate, 'db'))) return candidate;
   }
 
-  const cacheDir = path.join(root, '.cache');
-  const cloneDir = path.join(cacheDir, 'image-inspirer');
-  mkdirSync(cacheDir, { recursive: true });
-  execFileSync('git', ['clone', '--depth', '1', upstreamUrl, cloneDir], { stdio: 'inherit' });
-  return cloneDir;
+  throw new Error('Cannot find bundled image-inspirer resources. Expected resources/image-inspirer/db.');
 }
 
 function parseCases(markdown, category) {
@@ -155,11 +149,9 @@ function cleanMarkdown(value) {
 }
 
 function getCommit(repoDir) {
-  try {
-    return execFileSync('git', ['-C', repoDir, 'rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
-  } catch {
-    return '';
-  }
+  const commitPath = path.join(repoDir, 'UPSTREAM_COMMIT');
+  if (!existsSync(commitPath)) return '';
+  return readFileSync(commitPath, 'utf8').trim().slice(0, 7);
 }
 
 function copyUpstreamLicense(repoDir) {

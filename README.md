@@ -4,14 +4,29 @@
 
 素材来源：[wukongnotnull/image-inspirer](https://github.com/wukongnotnull/image-inspirer)，上游项目使用 Apache License 2.0。
 
+## 素材
+
+图片和提示词资源已经保存到本仓库：
+
+```text
+resources/image-inspirer/
+├── LICENSE
+├── UPSTREAM_COMMIT
+└── db/
+    ├── UI与界面/
+    │   ├── prompt.md
+    │   └── images/
+    └── ...
+```
+
+构建时会从 `resources/image-inspirer/db` 读取原始 `prompt.md` 和图片，并生成网页需要的 `public/gallery-data.json` 与 `public/gallery-images/`。
+
 ## 本地运行
 
 ```bash
 npm install
 npm run dev
 ```
-
-构建脚本会优先读取相邻目录 `../image-inspirer`，如果不存在，会自动浅克隆上游仓库到 `.cache/image-inspirer`。
 
 ## 部署
 
