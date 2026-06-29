@@ -15,14 +15,16 @@ npm run dev
 
 ## 部署
 
-推送到 GitHub 后，仓库的 Actions 会自动构建并部署到项目级 GitHub Pages：
+仓库使用 `gh-pages` 分支作为项目级 GitHub Pages 发布源：
 
 ```text
 https://<用户名>.github.io/<仓库名>/
 ```
 
-如需手动启用 Pages：
+部署流程：
 
 ```bash
-gh api repos/<用户名>/<仓库名>/pages -X POST -f build_type=workflow
+npm run build
+git push origin main
+# 将 dist/ 内容提交并推送到 gh-pages 分支
 ```
