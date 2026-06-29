@@ -1,0 +1,7 @@
+AI Image Atlas uses prompt and image resources from:
+
+  wukongnotnull/image-inspirer
+  https://github.com/wukongnotnull/image-inspirer
+
+The upstream project is licensed under Apache License 2.0.
+See the upstream repository for the original license and authorship details.

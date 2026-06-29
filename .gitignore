@@ -1,0 +1,7 @@
+node_modules
+dist
+.cache
+.playwright-cli
+public/gallery-data.json
+public/gallery-images
+.DS_Store
