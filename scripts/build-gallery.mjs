@@ -110,6 +110,7 @@ function parseCases(markdown, category) {
     const source = matchLine(block, /\*\*来源：\*\*\s*(.+)/) || '未标注';
     const imageName = matchLine(block, /!\[(case\d+\.jpg)\]\(images\/case\d+\.jpg\)/) || `case${heading.id}.jpg`;
     const prompt = extractPrompt(block);
+    const promptZh = extractChinesePrompt(prompt);
 
     return {
       id: heading.id,
@@ -119,8 +120,10 @@ function parseCases(markdown, category) {
       sourceRaw: source,
       imageName,
       prompt,
+      promptZh,
+      promptCopy: promptZh || prompt,
       promptLength: prompt.length,
-      searchText: `${heading.title} ${category} ${source} ${prompt}`.toLowerCase(),
+      searchText: `${heading.title} ${category} ${source} ${prompt} ${promptZh}`.toLowerCase(),
     };
   });
 }
@@ -139,6 +142,17 @@ function extractPrompt(block) {
 function matchLine(value, re) {
   const match = value.match(re);
   return match?.[1]?.trim();
+}
+
+function extractChinesePrompt(prompt) {
+  const localized = prompt.match(/\[中文\]\s*([\s\S]*?)(?=\n\s*\[(?:English|英文)\]|\s*$)/i);
+  if (localized?.[1]?.trim()) return localized[1].trim();
+
+  return containsChinese(prompt) ? prompt.trim() : '';
+}
+
+function containsChinese(value) {
+  return /[\u3400-\u9fff]/.test(value);
 }
 
 function cleanMarkdown(value) {

@@ -56,7 +56,7 @@ function App() {
   }
 
   async function copyPrompt(item) {
-    await navigator.clipboard.writeText(item.prompt);
+    await navigator.clipboard.writeText(item.promptCopy || item.promptZh || item.prompt);
     setCopiedId(item.id);
     window.setTimeout(() => setCopiedId(null), 1600);
   }
@@ -281,7 +281,7 @@ function CaseDialog({ item, copied, onClose, onCopy }) {
             <span>{item.promptLength.toLocaleString('zh-CN')} 字符</span>
             <button type="button" onClick={onCopy}>
               {copied ? <Check size={18} /> : <Copy size={18} />}
-              {copied ? '已复制' : '复制提示词'}
+              {copied ? '已复制' : item.promptZh ? '复制中文提示词' : '复制提示词'}
             </button>
           </div>
 
