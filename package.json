@@ -6,7 +6,7 @@
   "scripts": {
     "prepare:data": "node scripts/build-gallery.mjs",
     "dev": "npm run prepare:data && vite --host 127.0.0.1",
-    "build": "npm run prepare:data && vite build",
+    "build": "npm run prepare:data && VITE_BASE=/ai-image-atlas/ vite build",
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {
