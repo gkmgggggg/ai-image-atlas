@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   ArrowUpRight,
@@ -15,6 +15,8 @@ import {
 import './styles.css';
 
 const base = import.meta.env.BASE_URL;
+const INITIAL_BATCH_SIZE = 24;
+const LOAD_BATCH_SIZE = 18;
 
 function App() {
   const [payload, setPayload] = useState(null);
@@ -45,8 +47,6 @@ function App() {
       return item.searchText.includes(keyword);
     });
   }, [activeCategory, items, query, showOnlyImages]);
-
-  const featured = useMemo(() => filteredItems.slice(0, 9), [filteredItems]);
 
   function openRandom() {
     const withImages = filteredItems.filter((item) => item.hasImage);
@@ -151,7 +151,11 @@ function App() {
           </section>
 
           {payload ? (
-            <Gallery items={featured.length > 0 ? filteredItems : []} onOpen={setSelected} />
+            <Gallery
+              key={`${activeCategory}:${showOnlyImages}:${query}`}
+              items={filteredItems}
+              onOpen={setSelected}
+            />
           ) : (
             <LoadingGrid />
           )}
@@ -189,6 +193,30 @@ function CategoryButton({ name, count, active, onClick }) {
 }
 
 function Gallery({ items, onOpen }) {
+  const [visibleCount, setVisibleCount] = useState(INITIAL_BATCH_SIZE);
+  const sentinelRef = useRef(null);
+
+  useEffect(() => {
+    setVisibleCount(INITIAL_BATCH_SIZE);
+  }, [items]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || visibleCount >= items.length) return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setVisibleCount((count) => Math.min(count + LOAD_BATCH_SIZE, items.length));
+        }
+      },
+      { rootMargin: '720px 0px' },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [items.length, visibleCount]);
+
   if (items.length === 0) {
     return (
       <section className="emptyState">
@@ -199,38 +227,67 @@ function Gallery({ items, onOpen }) {
     );
   }
 
+  const visibleItems = items.slice(0, visibleCount);
+  const hasMore = visibleCount < items.length;
+
   return (
-    <section className="gallery" aria-label="AI 图集">
-      {items.map((item) => (
-        <button
-          className="caseCard"
-          type="button"
-          key={`${item.category}-${item.id}`}
-          onClick={() => onOpen(item)}
-          aria-label={`打开案例 ${item.id}：${item.title}`}
-        >
-          <div className="imageFrame">
-            {item.hasImage ? (
-              <img loading="lazy" src={`${base}${item.image}`} alt={`案例 ${item.id}：${item.title}`} />
-            ) : (
-              <div className="missingImage"><ImageIcon size={24} /> 无本地图</div>
-            )}
-          </div>
-          <div className="cardBody">
-            <span>{item.category}</span>
-            <h2>{item.title}</h2>
-            <p>{item.prompt}</p>
-          </div>
-        </button>
-      ))}
-    </section>
+    <>
+      <section className="gallery" aria-label="AI 图集">
+        {visibleItems.map((item, index) => (
+          <CaseCard item={item} index={index} key={`${item.category}-${item.id}`} onOpen={onOpen} />
+        ))}
+      </section>
+      {hasMore && (
+        <div className="lazyLoadArea" ref={sentinelRef} aria-label="继续加载">
+          <LoadingGrid count={6} compact />
+        </div>
+      )}
+    </>
   );
 }
 
-function LoadingGrid() {
+function CaseCard({ item, index, onOpen }) {
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    setLoaded(false);
+  }, [item.image]);
+
   return (
-    <section className="gallery" aria-label="加载中">
-      {Array.from({ length: 12 }).map((_, index) => (
+    <button
+      className="caseCard"
+      type="button"
+      onClick={() => onOpen(item)}
+      aria-label={`打开案例 ${item.id}：${item.title}`}
+    >
+      <div className={`imageFrame ${item.hasImage && !loaded ? 'isLoading' : ''}`}>
+        {item.hasImage ? (
+          <img
+            className={loaded ? 'isLoaded' : ''}
+            loading={index < 8 ? 'eager' : 'lazy'}
+            decoding="async"
+            fetchPriority={index < 4 ? 'high' : 'auto'}
+            src={`${base}${item.image}`}
+            alt={`案例 ${item.id}：${item.title}`}
+            onLoad={() => setLoaded(true)}
+          />
+        ) : (
+          <div className="missingImage"><ImageIcon size={24} /> 无本地图</div>
+        )}
+      </div>
+      <div className="cardBody">
+        <span>{item.category}</span>
+        <h2>{item.title}</h2>
+        <p>{item.prompt}</p>
+      </div>
+    </button>
+  );
+}
+
+function LoadingGrid({ count = 12, compact = false }) {
+  return (
+    <section className={`gallery ${compact ? 'isCompactSkeleton' : ''}`} aria-label="加载中">
+      {Array.from({ length: count }).map((_, index) => (
         <div className="caseCard skeleton" key={index}>
           <div className="imageFrame" />
           <div className="cardBody">

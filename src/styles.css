@@ -295,21 +295,25 @@ main {
 }
 
 .gallery {
-  columns: 4 250px;
-  column-gap: 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 18px;
+  align-items: stretch;
 }
 
 .caseCard {
-  display: inline-block;
+  display: grid;
+  grid-template-rows: auto 1fr;
   width: 100%;
-  margin: 0 0 18px;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
   padding: 0;
   text-align: left;
   background: var(--panel);
   border: 1px solid var(--ink);
   border-radius: 8px;
   overflow: hidden;
-  break-inside: avoid;
   box-shadow: 6px 6px 0 rgba(23, 23, 23, 0.12);
   transition: transform 160ms ease, box-shadow 160ms ease;
 }
@@ -320,17 +324,38 @@ main {
 }
 
 .imageFrame {
+  position: relative;
   display: grid;
   place-items: center;
-  min-height: 220px;
+  aspect-ratio: 4 / 3;
+  min-height: 0;
   background: #e8e7df;
   border-bottom: 1px solid var(--ink);
+  overflow: hidden;
 }
 
 .imageFrame img {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.imageFrame img.isLoaded {
+  opacity: 1;
+}
+
+.imageFrame.isLoading::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.62), transparent),
+    linear-gradient(135deg, #e5e3da, #f4f2ea);
+  background-size: 240% 100%, 100% 100%;
+  animation: shimmer 1.2s infinite;
 }
 
 .missingImage {
@@ -338,11 +363,15 @@ main {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 220px;
+  width: 100%;
+  height: 100%;
   color: var(--muted);
 }
 
 .cardBody {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
   padding: 14px;
 }
 
@@ -353,9 +382,14 @@ main {
 }
 
 .cardBody h2 {
+  display: -webkit-box;
+  min-height: 46px;
   margin: 7px 0 8px;
+  overflow: hidden;
   font-size: 18px;
   line-height: 1.28;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .cardBody p {
@@ -400,6 +434,14 @@ main {
 .skeleton .cardBody p {
   width: 100%;
   height: 58px;
+}
+
+.lazyLoadArea {
+  margin-top: 18px;
+}
+
+.isCompactSkeleton {
+  pointer-events: none;
 }
 
 .emptyState {
@@ -643,7 +685,7 @@ pre {
   }
 
   .gallery {
-    columns: 1;
+    grid-template-columns: 1fr;
   }
 
   .dialogBackdrop {
